@@ -29,5 +29,9 @@ func NewApp() *fiber.App {
 	// require admin role to create room
 	app.Post("/api/v1/AddRoom", middleware.JWTConfig(secret), middleware.RequireRole("admin"), handlers.AddRoomHandler)
 
+	// booking routes
+	app.Post("/api/v1/bookings", middleware.JWTConfig(secret), handlers.CreateBooking)
+	app.Get("/api/v1/bookings/me", middleware.JWTConfig(secret), handlers.ListMyBookings)
+
 	return app
 }

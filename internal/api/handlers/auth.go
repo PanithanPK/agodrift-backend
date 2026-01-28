@@ -16,6 +16,7 @@ var authService = service.GetAuth()
 
 // LoginRequest is the body for login
 type LoginRequest struct {
+	Email    string `json:"email"`
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
@@ -27,7 +28,11 @@ func Login(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString("invalid body")
 	}
-	u, ok := authService.Authenticate(req.Username, req.Password)
+	identifier := req.Email
+	if identifier == "" {
+		identifier = req.Username
+	}
+	u, ok := authService.Authenticate(identifier, req.Password)
 	if !ok {
 		return c.Status(fiber.StatusUnauthorized).SendString("invalid credentials")
 	}
@@ -64,9 +69,10 @@ func Me(c *fiber.Ctx) error {
 	}
 	if tok, ok := user.(*jwt.Token); ok {
 		if claims, ok := tok.Claims.(jwt.MapClaims); ok {
-			username, _ := claims["sub"].(string)
+			email, _ := claims["sub"].(string)
 			role, _ := claims["role"].(string)
-			return c.JSON(model.User{Username: username, Role: role})
+			uidFloat, _ := claims["uid"].(float64)
+			return c.JSON(model.User{ID: int(uidFloat), Email: email, Role: role})
 		}
 	}
 	return c.SendStatus(fiber.StatusBadRequest)

@@ -11,13 +11,13 @@ import (
 
 // UserRepository defines methods for user storage.
 type UserRepository interface {
-	GetByUsername(username string) (model.User, bool)
+	GetByEmail(email string) (model.User, bool)
 	Create(u model.User) model.User
 }
 
 type inMemoryUserRepo struct {
 	mu    sync.RWMutex
-	users map[string]model.User // keyed by username
+	users map[string]model.User // keyed by email
 	next  int
 }
 
@@ -28,15 +28,15 @@ func NewInMemoryUserRepo() *inMemoryUserRepo {
 		next:  1,
 	}
 	// seed users (passwords are plain for demo only)
-	r.Create(model.User{Username: "admin", Password: "adminpass", Role: "admin"})
-	r.Create(model.User{Username: "alice", Password: "userpass", Role: "user"})
+	r.Create(model.User{Name: "Admin User", Email: "admin@agodrift.dev", Password: "adminpass", Role: "admin"})
+	r.Create(model.User{Name: "Alice Traveler", Email: "alice@example.com", Password: "userpass", Role: "user"})
 	return r
 }
 
-func (r *inMemoryUserRepo) GetByUsername(username string) (model.User, bool) {
+func (r *inMemoryUserRepo) GetByEmail(email string) (model.User, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	u, ok := r.users[username]
+	u, ok := r.users[email]
 	return u, ok
 }
 
@@ -45,7 +45,7 @@ func (r *inMemoryUserRepo) Create(u model.User) model.User {
 	defer r.mu.Unlock()
 	u.ID = r.next
 	r.next++
-	r.users[u.Username] = u
+	r.users[u.Email] = u
 	return u
 }
 
@@ -57,9 +57,9 @@ func NewMySQLUserRepo(db *sql.DB) *mysqlUserRepo {
 	return &mysqlUserRepo{db: db}
 }
 
-func (r *mysqlUserRepo) GetByUsername(username string) (model.User, bool) {
+func (r *mysqlUserRepo) GetByEmail(email string) (model.User, bool) {
 	var u model.User
-	err := r.db.QueryRow("SELECT id, username, password, role FROM users WHERE username = ?", username).Scan(&u.ID, &u.Username, &u.Password, &u.Role)
+	err := r.db.QueryRow("SELECT id, name, email, password, role FROM users WHERE email = ?", email).Scan(&u.ID, &u.Name, &u.Email, &u.Password, &u.Role)
 	if err != nil {
 		return u, false
 	}
@@ -67,7 +67,7 @@ func (r *mysqlUserRepo) GetByUsername(username string) (model.User, bool) {
 }
 
 func (r *mysqlUserRepo) Create(u model.User) model.User {
-	result, err := r.db.Exec("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", u.Username, u.Password, u.Role)
+	result, err := r.db.Exec("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)", u.Name, u.Email, u.Password, u.Role)
 	if err != nil {
 		return u
 	}

@@ -47,9 +47,8 @@ func GetAuth() *AuthService {
 	return DefaultAuth
 }
 
-// Authenticate checks username/password and returns user if valid.
-func (s *AuthService) Authenticate(username, password string) (model.User, bool) {
-	u, ok := s.users.GetByUsername(username)
+func (s *AuthService) Authenticate(email, password string) (model.User, bool) {
+	u, ok := s.users.GetByEmail(email)
 	if !ok {
 		return model.User{}, false
 	}
@@ -64,7 +63,8 @@ func (s *AuthService) Authenticate(username, password string) (model.User, bool)
 func (s *AuthService) CreateToken(u model.User, ttl time.Duration) (string, error) {
 	jti := uuid.NewString()
 	claims := jwt.MapClaims{
-		"sub":  u.Username,
+		"sub":  u.Email,
+		"uid":  u.ID,
 		"role": u.Role,
 		"jti":  jti,
 		"exp":  time.Now().Add(ttl).Unix(),

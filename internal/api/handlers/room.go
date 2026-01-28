@@ -9,23 +9,23 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-var tourService = service.NewTourService()
+var roomService = service.NewRoomService()
 
 func Health(c *fiber.Ctx) error {
 	return c.SendString("OK")
 }
 
 func ListRoomsHandler(c *fiber.Ctx) error {
-	var t model.Tour
-	if err := c.BodyParser(&t); err != nil {
-		return c.Status(fiber.StatusBadRequest).SendString("invalid body")
-	}
-	created := tourService.Create(t)
-	return c.Status(fiber.StatusCreated).JSON(created)
+	return c.JSON(roomService.List())
 }
 
 func AddRoomHandler(c *fiber.Ctx) error {
-	return c.JSON(tourService.List())
+	var r model.Room
+	if err := c.BodyParser(&r); err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString("invalid body")
+	}
+	created := roomService.Create(r)
+	return c.Status(fiber.StatusCreated).JSON(created)
 }
 
 func RoomByIDHandler(c *fiber.Ctx) error {
@@ -34,9 +34,9 @@ func RoomByIDHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString("invalid id")
 	}
-	t, found := tourService.Get(id)
+	r, found := roomService.Get(id)
 	if !found {
 		return c.Status(fiber.StatusNotFound).SendString("not found")
 	}
-	return c.JSON(t)
+	return c.JSON(r)
 }
