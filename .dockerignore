@@ -1,0 +1,3 @@
+# Exclude MySQL data and socket from build context
+mysql_data
+**/mysql.sock
